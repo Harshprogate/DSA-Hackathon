@@ -1,0 +1,266 @@
+{
+  "info": {
+    "_postman_id": "a918e7e1-8f3b-4c48-8dfb-123456789abc",
+    "name": "Warehouse Live Arrival Index API",
+    "description": "Postman test collection for the Warehouse Live Arrival Index backend service.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Register Package (Add 1)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"packageId\": 1\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/packages",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages"]
+        }
+      }
+    },
+    {
+      "name": "2. Register Package (Add 3)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"packageId\": 3\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/packages",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages"]
+        }
+      }
+    },
+    {
+      "name": "3. Register Package (Bridge Merge 2 into [1,3])",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"packageId\": 2\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/packages",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages"]
+        }
+      }
+    },
+    {
+      "name": "4. Register Duplicate Package (Duplicate 2)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"packageId\": 2\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/packages",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages"]
+        }
+      }
+    },
+    {
+      "name": "5. Register Batch Packages",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"packageIds\": [6, 7, 5, 8]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/packages/batch",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages", "batch"]
+        }
+      }
+    },
+    {
+      "name": "6. Bridge Merge [1,3] and [5,8] via 4",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"packageId\": 4\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/packages",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages"]
+        }
+      }
+    },
+    {
+      "name": "7. Get All Received Intervals",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/packages/intervals",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages", "intervals"]
+        }
+      }
+    },
+    {
+      "name": "8. Get Missing Intervals [1, 15]",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/packages/missing?start=1&end=15",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages", "missing"],
+          "query": [
+            {
+              "key": "start",
+              "value": "1"
+            },
+            {
+              "key": "end",
+              "value": "15"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "9. Get Bounded Received Intervals [3, 10]",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/packages/intervals/range?start=3&end=10",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages", "intervals", "range"],
+          "query": [
+            {
+              "key": "start",
+              "value": "3"
+            },
+            {
+              "key": "end",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "10. Get Statistics",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/packages/statistics",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages", "statistics"]
+        }
+      }
+    },
+    {
+      "name": "11. Validation Error - Negative Package ID",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"packageId\": -1\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/packages",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages"]
+        }
+      }
+    },
+    {
+      "name": "12. Validation Error - Invalid Range (start > end)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/packages/missing?start=50&end=20",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "packages", "missing"],
+          "query": [
+            {
+              "key": "start",
+              "value": "50"
+            },
+            {
+              "key": "end",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

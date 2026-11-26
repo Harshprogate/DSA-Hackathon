@@ -1,0 +1,4 @@
+com\warehouse\arrivalindex\HackathonFeaturesTest.class
+com\warehouse\arrivalindex\service\PackageIndexServiceTest.class
+com\warehouse\arrivalindex\controller\PackageControllerTest.class
+com\warehouse\arrivalindex\service\PackageIndexPerformanceTest.class

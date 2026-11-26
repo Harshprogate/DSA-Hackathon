@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
+  <title>Live Arrival Index — Interval Engine Platform</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Left Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Platform Navigation">
+      <div class="sidebar-brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+            <path d="m3.3 7 8.7 5 8.7-5"/>
+            <path d="M12 22V12"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">Live Arrival Index</div>
+          <div class="brand-sub">TreeMap Interval Engine</div>
+        </div>
+      </div>
+
+      <nav class="nav-list" aria-label="Primary sections">
+        <button type="button" class="nav-item" data-view="overview" aria-current="page">
+          <span class="nav-dot" aria-hidden="true"></span>Overview
+        </button>
+        <button type="button" class="nav-item" data-view="explorer">
+          <span class="nav-dot" aria-hidden="true"></span>Interval Explorer
+        </button>
+        <button type="button" class="nav-item" data-view="lab">
+          <span class="nav-dot" aria-hidden="true"></span>Algorithm Laboratory
+        </button>
+        <button type="button" class="nav-item" data-view="simulator">
+          <span class="nav-dot" aria-hidden="true"></span>Arrival Simulator
+        </button>
+        <button type="button" class="nav-item" data-view="benchmark">
+          <span class="nav-dot" aria-hidden="true"></span>Performance Benchmark
+        </button>
+        <button type="button" class="nav-item" data-view="analytics">
+          <span class="nav-dot" aria-hidden="true"></span>Warehouse Analytics
+        </button>
+        <button type="button" class="nav-item" data-view="logs">
+          <span class="nav-dot" aria-hidden="true"></span>Activity Logs
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-note">
+          <strong>Why TreeMap?</strong>
+          <span>Maintains sorted, disjoint <code>[start, end]</code> intervals in <code>O(log n)</code> time without allocating billion-element arrays.</span>
+        </div>
+        <a href="/swagger-ui.html" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-full">
+          Swagger / OpenAPI
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <div class="main-area">
+      <!-- Top Command Bar -->
+      <header class="command-bar">
+        <div class="command-left">
+          <h1 id="view-title">Overview</h1>
+          <div id="api-health-badge" class="status-pill status-connecting" role="status" aria-live="polite">
+            <span class="pulse-dot" aria-hidden="true"></span>
+            <span id="api-health-text">Connecting...</span>
+          </div>
+        </div>
+        <div class="command-actions">
+          <button type="button" id="refresh-btn" class="btn btn-secondary">Refresh</button>
+          <button type="button" id="open-undo-btn" class="btn btn-secondary">Undo Last</button>
+          <button type="button" id="open-reset-btn" class="btn btn-danger-outline">Reset Index</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <!-- ==================== 1. OVERVIEW ==================== -->
+        <section id="view-overview" class="view-section">
+          <!-- Quick Ingest & Bounded Range Control -->
+          <div class="toolbar-row">
+            <form id="quick-single-form" class="inline-form" novalidate>
+              <div class="field">
+                <label for="quick-package-id">Register Package ID</label>
+                <div class="input-group">
+                  <input type="number" id="quick-package-id" min="0" max="1000000000" step="1" required placeholder="0 - 1,000,000,000" data-error="quick-id-err" aria-invalid="false">
+                  <button type="submit" class="btn btn-primary">Insert</button>
+                </div>
+                <div id="quick-id-err" class="error-msg">Enter an integer between 0 and 1,000,000,000.</div>
+              </div>
+            </form>
+
+            <form id="quick-batch-form" class="inline-form" novalidate>
+              <div class="field">
+                <label for="quick-batch-ids">Batch Stream (Order Preserved)</label>
+                <div class="input-group">
+                  <input type="text" id="quick-batch-ids" required pattern="^\s*\d+(\s*[,\s]\s*\d+)*\s*$" placeholder="e.g. 1, 3, 7, 2, 6" data-error="quick-batch-err" aria-invalid="false">
+                  <button type="submit" class="btn btn-secondary">Send Batch</button>
+                </div>
+                <div id="quick-batch-err" class="error-msg">Enter comma or space-separated nonnegative integers.</div>
+                <div class="quick-actions" style="margin-top:.4rem">
+                  <span class="hint">Live Scenarios:</span>
+                  <button type="button" class="btn btn-secondary scenario-btn" style="font-size:.72rem;padding:.25rem .55rem" data-seq="1, 3, 7, 2, 6">Stream [1,3,7,2,6]</button>
+                  <button type="button" class="btn btn-secondary scenario-btn" style="font-size:.72rem;padding:.25rem .55rem" data-seq="1, 2, 3, 6, 7, 8">Setup [1,2,3] &amp; [6,7,8]</button>
+                  <button type="button" class="btn btn-secondary scenario-btn" style="font-size:.72rem;padding:.25rem .55rem" data-seq="0, 100, 99">Bridge with 4</button>
+                  <button type="button" class="btn btn-secondary scenario-btn" style="font-size:.72rem;padding:.25rem .55rem" data-seq="0, 100, 180">Sparse [0, 100, 180]</button>
+                </div>
+              </div>
+            </form>
+
+            <form id="overview-range-form" class="inline-form" novalidate>
+              <div class="field">
+                <label for="ov-range-start">KPI Range Window</label>
+                <div class="input-group">
+                  <input type="number" id="ov-range-start" min="0" max="1000000000" value="1" required aria-label="Overview range start">
+                  <input type="number" id="ov-range-end" min="0" max="1000000000" value="100" required aria-label="Overview range end">
+                  <button type="submit" class="btn btn-secondary">Apply</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div id="overview-feedback" class="banner" hidden role="status" aria-live="polite"></div>
+
+          <!-- 10 Live Backend KPIs -->
+          <div class="kpi-grid" aria-label="Live Engine Metrics">
+            <div class="kpi-cell"><span class="kpi-label">Unique Packages</span><strong class="kpi-val mono" id="kpi-unique">0</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Active Intervals</span><strong class="kpi-val mono" id="kpi-intervals">0</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Missing in Range</span><strong class="kpi-val mono" id="kpi-missing-range">&mdash;</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Smallest ID</span><strong class="kpi-val mono" id="kpi-min">&mdash;</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Largest ID</span><strong class="kpi-val mono" id="kpi-max">&mdash;</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Successful Inserts</span><strong class="kpi-val mono" id="kpi-inserts">0</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Duplicate Arrivals</span><strong class="kpi-val mono" id="kpi-duplicates">0</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Bridge Merges</span><strong class="kpi-val mono accent-text" id="kpi-merges">0</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Interval Extensions</span><strong class="kpi-val mono" id="kpi-extensions">0</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Range Completion</span><strong class="kpi-val mono success-text" id="kpi-completion">0%</strong></div>
+          </div>
+
+          <!-- Live Interval Topology -->
+          <div class="surface-block">
+            <div class="block-header">
+              <div>
+                <h2>Live Interval Topology</h2>
+                <p class="block-sub">Interval-scaled visualization (independent of max ID). Click any block to inspect.</p>
+              </div>
+              <div class="viz-controls">
+                <label class="zoom-label" for="viz-zoom">Zoom <input type="range" id="viz-zoom" min="1" max="5" step="0.5" value="1"></label>
+                <div class="legend">
+                  <span><i class="swatch swatch-rx"></i> Received</span>
+                  <span><i class="swatch swatch-gap"></i> Missing Gap</span>
+                  <span><i class="swatch swatch-mod"></i> Recently Modified</span>
+                </div>
+              </div>
+            </div>
+            <div class="viz-scroll">
+              <div id="interval-visualizer" class="viz-track">
+                <div class="empty-msg">No intervals indexed yet. Insert a package ID or launch the Arrival Simulator.</div>
+              </div>
+            </div>
+            <div id="viz-axis" class="viz-axis"></div>
+            <div id="viz-inspector" class="viz-inspector mono" hidden></div>
+          </div>
+
+          <!-- Bottom row: Intervals table + Live Activity Log -->
+          <div class="split-2" style="grid-template-columns: 1.6fr 1fr;">
+            <div class="surface-block">
+              <div class="block-header">
+                <div>
+                  <h2>Active Disjoint Intervals</h2>
+                  <p class="block-sub">Live snapshot from <code>GET /api/packages/intervals</code></p>
+                </div>
+                <span id="explorer-count-badge-ov" class="count-chip mono">0 intervals</span>
+              </div>
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead><tr><th>#</th><th>Interval</th><th>Start ID</th><th>End ID</th><th>Package Count</th></tr></thead>
+                  <tbody id="ov-intervals-tbody">
+                    <tr><td colspan="5" class="empty-cell">No active intervals in index.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="surface-block">
+              <div class="block-header">
+                <div><h2>Live API Activity Log</h2><p class="block-sub">Real-time HTTP responses from backend</p></div>
+                <button type="button" id="clear-log-btn" class="btn btn-secondary" style="font-size:.72rem;padding:.25rem .6rem">Clear</button>
+              </div>
+              <div id="api-activity-log" style="font-size:.75rem;overflow-y:auto;max-height:220px;display:flex;flex-direction:column;gap:1px;">
+                <div id="api-log-empty" style="font-size:.78rem;color:var(--text-muted);padding:.5rem 0">Waiting for API operations...</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== 2. INTERVAL EXPLORER ==================== -->
+        <section id="view-explorer" class="view-section" hidden>
+          <div class="split-2">
+            <div class="surface-block">
+              <div class="block-header">
+                <div>
+                  <h2>Bounded Range &amp; Missing Gap Query</h2>
+                  <p class="block-sub">Executes <code>/api/packages/intervals/range</code> and <code>/api/packages/missing</code> in <code>O(log k + r)</code></p>
+                </div>
+              </div>
+              <form id="explorer-range-form" class="inline-form" novalidate>
+                <div class="field-row">
+                  <div class="field">
+                    <label for="exp-start">Start ID</label>
+                    <input type="number" id="exp-start" min="0" max="1000000000" value="1" required>
+                  </div>
+                  <div class="field">
+                    <label for="exp-end">End ID</label>
+                    <input type="number" id="exp-end" min="0" max="1000000000" value="20" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary align-end">Query Range</button>
+                </div>
+              </form>
+              <div id="explorer-error" class="banner banner-error" hidden></div>
+              <div id="explorer-results" class="split-2" hidden>
+                <div>
+                  <h3 class="sub-h3">Received (Clipped)</h3>
+                  <div id="exp-received-pills" class="pill-wrap"></div>
+                </div>
+                <div>
+                  <h3 class="sub-h3">Missing Gaps</h3>
+                  <div id="exp-missing-pills" class="pill-wrap"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="surface-block">
+              <div class="block-header">
+                <div>
+                  <h2>Historical Snapshots &amp; Diff</h2>
+                  <p class="block-sub">Compare any two recorded index states from <code>GET /api/packages/history</code></p>
+                </div>
+                <button type="button" id="refresh-snapshots-btn" class="btn btn-secondary">Load Snapshots</button>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label for="snap-a">Snapshot A (Earlier)</label>
+                  <select id="snap-a"></select>
+                </div>
+                <div class="field">
+                  <label for="snap-b">Snapshot B (Later)</label>
+                  <select id="snap-b"></select>
+                </div>
+                <button type="button" id="compare-snaps-btn" class="btn btn-primary align-end">Compare</button>
+              </div>
+              <div id="snap-diff-output" class="diff-box mono">Select two snapshots to compare Created, Extended, Merged, or Split intervals.</div>
+            </div>
+          </div>
+
+          <!-- Active Disjoint Intervals Table -->
+          <div class="surface-block">
+            <div class="block-header">
+              <div>
+                <h2 id="intervals-table-caption">Active Disjoint Intervals</h2>
+                <p class="block-sub">Sorted TreeMap entries from <code>GET /api/packages/intervals</code></p>
+              </div>
+              <span id="explorer-count-badge" class="mono count-chip">0 intervals</span>
+            </div>
+            <div tabindex="0" role="region" aria-labelledby="intervals-table-caption" class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Interval</th>
+                    <th scope="col">Start ID</th>
+                    <th scope="col">End ID</th>
+                    <th scope="col">Package Count</th>
+                  </tr>
+                </thead>
+                <tbody id="explorer-tbody">
+                  <tr><td colspan="5" class="empty-cell">No active intervals in index.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== 3. ALGORITHM LABORATORY ==================== -->
+        <section id="view-lab" class="view-section" hidden>
+          <div class="split-2">
+            <!-- What-If Arrival Simulator -->
+            <div class="surface-block">
+              <div class="block-header">
+                <div>
+                  <h2>What-If Arrival Simulator</h2>
+                  <p class="block-sub">Preview exact TreeMap decision without mutating the index (<code>POST /api/packages/preview</code>)</p>
+                </div>
+              </div>
+              <form id="lab-form" novalidate>
+                <div class="field">
+                  <label for="lab-package-id">Candidate Package ID</label>
+                  <span class="hint">Test 0 to 1,000,000,000 against live TreeMap state</span>
+                  <div class="input-group">
+                    <input type="number" id="lab-package-id" min="0" max="1000000000" step="1" required placeholder="e.g. 4" data-error="lab-id-err" aria-invalid="false">
+                    <button type="button" id="lab-preview-btn" class="btn btn-secondary">Preview Arrival</button>
+                    <button type="submit" id="lab-confirm-btn" class="btn btn-primary">Confirm Arrival</button>
+                  </div>
+                  <div id="lab-id-err" class="error-msg">Enter an integer between 0 and 1,000,000,000.</div>
+                </div>
+              </form>
+              <div id="lab-error-banner" class="banner banner-error" hidden></div>
+
+              <div id="preview-summary" class="trace-kv" hidden>
+                <div><span>Mode</span><strong id="trace-mode" class="mono">PREVIEW</strong></div>
+                <div><span>Operation</span><strong id="trace-op" class="op-badge">NEW_INTERVAL</strong></div>
+                <div><span>floorEntry(x)</span><strong id="trace-floor" class="mono">null</strong></div>
+                <div><span>ceilingEntry(x+1)</span><strong id="trace-ceiling" class="mono">null</strong></div>
+                <div><span>Already Exists?</span><strong id="trace-dup" class="mono">false</strong></div>
+                <div><span>Connects Left?</span><strong id="trace-left" class="mono">false</strong></div>
+                <div><span>Connects Right?</span><strong id="trace-right" class="mono">false</strong></div>
+                <div><span>Interval Count</span><strong id="trace-counts" class="mono">0 &rarr; 1</strong></div>
+              </div>
+            </div>
+
+            <!-- Step-by-Step TreeMap Execution Trace -->
+            <div class="surface-block">
+              <div class="block-header">
+                <div>
+                  <h2>Inside the TreeMap Engine</h2>
+                  <p class="block-sub">Live backend decision steps &amp; structural transition</p>
+                </div>
+                <span id="trace-latency" class="mono count-chip">&mdash;</span>
+              </div>
+              <ol id="trace-steps-list" class="steps-list">
+                <li class="step-empty">Run Preview Arrival or Confirm Arrival to inspect live TreeMap execution steps.</li>
+              </ol>
+              <div id="trace-diff-visual" class="trace-diff" hidden>
+                <div class="diff-row"><span class="diff-lbl">Before:</span><div id="trace-before-pills" class="pill-wrap"></div></div>
+                <div class="diff-row"><span class="diff-lbl">Removed:</span><div id="trace-removed-pills" class="pill-wrap"></div></div>
+                <div class="diff-row"><span class="diff-lbl">Created/Updated:</span><div id="trace-created-pills" class="pill-wrap"></div></div>
+                <div class="diff-row"><span class="diff-lbl">After:</span><div id="trace-after-pills" class="pill-wrap"></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== 4. ARRIVAL SIMULATOR ==================== -->
+        <section id="view-simulator" class="view-section" hidden>
+          <div class="surface-block">
+            <div class="block-header">
+              <div>
+                <h2>Arrival Stream Replay Simulator</h2>
+                <p class="block-sub">Isolated deterministic replay session (<code>/api/simulation/*</code>) &mdash; never modifies your production index.</p>
+              </div>
+              <button type="button" id="sim-hackathon-demo-btn" class="btn btn-primary">
+                Run Hackathon Demo [1, 3, 7, 2, 6, 4, 5, 3]
+              </button>
+            </div>
+
+            <div class="sim-controls-grid">
+              <div class="field">
+                <label for="sim-sequence-input">Arrival Sequence</label>
+                <input type="text" id="sim-sequence-input" value="1, 3, 7, 2, 6, 4, 5, 3" placeholder="Comma-separated IDs">
+              </div>
+              <div class="field">
+                <label for="sim-preset-select">Preset Pattern</label>
+                <select id="sim-preset-select">
+                  <option value="demo">Hackathon Demo [1, 3, 7, 2, 6, 4, 5, 3]</option>
+                  <option value="sequential">Sequential [1..12]</option>
+                  <option value="reverse">Reverse [12..1]</option>
+                  <option value="sparse">Sparse [0, 500000, 1000000000, 1, 499999]</option>
+                  <option value="random">Random Shuffled (15 IDs)</option>
+                  <option value="duplicates">Duplicate-Heavy [5, 6, 5, 7, 6, 4, 8, 5]</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="sim-speed">Playback Speed</label>
+                <select id="sim-speed">
+                  <option value="1400">0.5x (Slow)</option>
+                  <option value="800" selected>1.0x (Normal)</option>
+                  <option value="400">2.0x (Fast)</option>
+                  <option value="180">4.0x (Turbo)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="sim-playback-bar">
+              <button type="button" id="sim-start-btn" class="btn btn-primary">Load / Start</button>
+              <button type="button" id="sim-play-btn" class="btn btn-secondary" disabled>Play</button>
+              <button type="button" id="sim-pause-btn" class="btn btn-secondary" disabled>Pause</button>
+              <button type="button" id="sim-prev-btn" class="btn btn-secondary" disabled>Previous Step</button>
+              <button type="button" id="sim-next-btn" class="btn btn-secondary" disabled>Next Step</button>
+              <button type="button" id="sim-reset-btn" class="btn btn-secondary" disabled>Reset</button>
+              <span id="sim-step-counter" class="mono count-chip">Step 0 / 0</span>
+            </div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-cell"><span class="kpi-label">Incoming ID</span><strong class="kpi-val mono accent-text" id="sim-cur-id">&mdash;</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Operation</span><strong class="kpi-val" id="sim-op">&mdash;</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Unique Packages</span><strong class="kpi-val mono" id="sim-unique">0</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Intervals</span><strong class="kpi-val mono" id="sim-icount">0</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Duplicates</span><strong class="kpi-val mono" id="sim-dups">0</strong></div>
+          </div>
+
+          <div class="surface-block">
+            <div class="block-header">
+              <div>
+                <h2>Isolated Simulation Intervals</h2>
+                <p class="block-sub" id="sim-message">Click "Load / Start" or "Run Hackathon Demo" to begin stepping.</p>
+              </div>
+            </div>
+            <div id="sim-visualizer" class="viz-track">
+              <div class="empty-msg">Simulation idle.</div>
+            </div>
+            <div id="sim-pills" class="pill-wrap"></div>
+          </div>
+        </section>
+
+        <!-- ==================== 5. PERFORMANCE BENCHMARK ==================== -->
+        <section id="view-benchmark" class="view-section" hidden>
+          <div class="surface-block">
+            <div class="block-header">
+              <div>
+                <h2>Performance Laboratory &mdash; TreeMap vs Sorting Baseline</h2>
+                <p class="block-sub">Executes identical datasets across multiple JVM runs and reports median timings (<code>POST /api/benchmark/run</code>)</p>
+              </div>
+            </div>
+            <form id="benchmark-form" class="sim-controls-grid">
+              <div class="field">
+                <label for="bench-size">Dataset Size</label>
+                <select id="bench-size">
+                  <option value="100">100 IDs</option>
+                  <option value="1000">1,000 IDs</option>
+                  <option value="5000" selected>5,000 IDs</option>
+                  <option value="10000">10,000 IDs</option>
+                  <option value="25000">25,000 IDs</option>
+                  <option value="50000">50,000 IDs</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="bench-pattern">Arrival Pattern</label>
+                <select id="bench-pattern">
+                  <option value="RANDOM" selected>Random</option>
+                  <option value="SEQUENTIAL">Sequential</option>
+                  <option value="REVERSE">Reverse Sequential</option>
+                  <option value="SPARSE">Sparse (0 to 1B)</option>
+                  <option value="DUPLICATE_HEAVY">Duplicate-Heavy</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="bench-runs">Median Runs</label>
+                <select id="bench-runs">
+                  <option value="1">1 run</option>
+                  <option value="3" selected>3 runs (Median)</option>
+                  <option value="5">5 runs (Median)</option>
+                </select>
+              </div>
+              <div class="align-end">
+                <button type="submit" id="bench-run-btn" class="btn btn-primary btn-full">Run Live Benchmark</button>
+              </div>
+            </form>
+            <p id="bench-note" class="block-sub" hidden></p>
+          </div>
+
+          <div id="bench-results-area" hidden>
+            <div class="kpi-grid">
+              <div class="kpi-cell"><span class="kpi-label">TreeMap Total Time</span><strong class="kpi-val mono success-text" id="bench-tree-ms">0 ms</strong></div>
+              <div class="kpi-cell"><span class="kpi-label">Sorting Baseline Time</span><strong class="kpi-val mono warn-text" id="bench-sort-ms">0 ms</strong></div>
+              <div class="kpi-cell"><span class="kpi-label">Speedup Factor</span><strong class="kpi-val mono accent-text" id="bench-speedup">1x</strong></div>
+              <div class="kpi-cell"><span class="kpi-label">Bridge Merges</span><strong class="kpi-val mono" id="bench-merges">0</strong></div>
+              <div class="kpi-cell"><span class="kpi-label">Extensions</span><strong class="kpi-val mono" id="bench-extensions">0</strong></div>
+            </div>
+
+            <div class="split-2">
+              <div class="surface-block">
+                <h3>Execution Time Comparison (ms)</h3>
+                <div id="chart-exec-time" class="bar-chart"></div>
+              </div>
+              <div class="surface-block">
+                <h3>Average &amp; Max Insertion Latency (ns)</h3>
+                <div id="chart-latency" class="bar-chart"></div>
+              </div>
+            </div>
+
+            <div class="surface-block">
+              <h3>Approach Metrics Comparison</h3>
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Approach</th>
+                      <th>Median Time (ms)</th>
+                      <th>Avg Latency (ns)</th>
+                      <th>Max Latency (ns)</th>
+                      <th>Intervals</th>
+                      <th>Duplicates</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bench-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== 6. WAREHOUSE ANALYTICS ==================== -->
+        <section id="view-analytics" class="view-section" hidden>
+          <div class="surface-block">
+            <div class="block-header">
+              <div>
+                <h2>Warehouse Coverage &amp; Missing Package Analyzer</h2>
+                <p class="block-sub">Arithmetic boundary analytics via <code>GET /api/packages/analytics</code> (never enumerates missing IDs)</p>
+              </div>
+            </div>
+            <form id="analytics-form" class="field-row" novalidate>
+              <div class="field">
+                <label for="ana-start">Expected Start ID</label>
+                <input type="number" id="ana-start" min="0" max="1000000000" value="1" required>
+              </div>
+              <div class="field">
+                <label for="ana-end">Expected End ID</label>
+                <input type="number" id="ana-end" min="0" max="1000000000" value="100" required>
+              </div>
+              <button type="submit" class="btn btn-primary align-end">Analyze Coverage</button>
+            </form>
+            <div id="analytics-error" class="banner banner-error" hidden></div>
+
+            <div id="analytics-output" hidden>
+              <div class="completion-bar-wrap">
+                <div class="completion-meta">
+                  <span>Range Completeness</span>
+                  <strong class="mono" id="ana-pct-label">0%</strong>
+                </div>
+                <progress id="ana-progress" max="100" value="0"></progress>
+              </div>
+
+              <div class="kpi-grid">
+                <div class="kpi-cell"><span class="kpi-label">Expected Count</span><strong class="kpi-val mono" id="ana-expected">0</strong></div>
+                <div class="kpi-cell"><span class="kpi-label">Received Count</span><strong class="kpi-val mono success-text" id="ana-received">0</strong></div>
+                <div class="kpi-cell"><span class="kpi-label">Missing Count</span><strong class="kpi-val mono danger-text" id="ana-missing">0</strong></div>
+                <div class="kpi-cell"><span class="kpi-label">Largest Missing Range</span><strong class="kpi-val mono" id="ana-largest-gap">&mdash;</strong></div>
+                <div class="kpi-cell"><span class="kpi-label">Smallest Missing Range</span><strong class="kpi-val mono" id="ana-smallest-gap">&mdash;</strong></div>
+              </div>
+
+              <div class="split-2">
+                <div>
+                  <h3 class="sub-h3">Received Intervals (<span id="ana-rx-count">0</span>)</h3>
+                  <div id="ana-rx-pills" class="pill-wrap"></div>
+                </div>
+                <div>
+                  <h3 class="sub-h3">Missing Intervals (<span id="ana-miss-count">0</span>)</h3>
+                  <div id="ana-miss-pills" class="pill-wrap"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Export Center -->
+          <div class="surface-block">
+            <div class="block-header">
+              <div>
+                <h2>Export &amp; Reporting Center</h2>
+                <p class="block-sub">Download live snapshots and bounded completeness reports directly from <code>/api/packages/export</code></p>
+              </div>
+            </div>
+            <div class="export-grid">
+              <button type="button" class="btn btn-secondary export-btn" data-export="intervals">Export Intervals (CSV)</button>
+              <button type="button" class="btn btn-secondary export-btn" data-export="missing">Export Missing Ranges (CSV)</button>
+              <button type="button" class="btn btn-secondary export-btn" data-export="json">Export Complete Index (JSON)</button>
+              <button type="button" class="btn btn-primary export-btn" data-export="pdf">Download Completeness Report (PDF)</button>
+              <button type="button" class="btn btn-secondary export-btn" data-export="activity">Export Activity History (CSV)</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== 7. ACTIVITY LOGS ==================== -->
+        <section id="view-logs" class="view-section" hidden>
+          <div class="kpi-grid">
+            <div class="kpi-cell"><span class="kpi-label">Total Duplicates</span><strong class="kpi-val mono warn-text" id="audit-dups">0</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Duplicate Rate</span><strong class="kpi-val mono" id="audit-dup-pct">0%</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Invalid Requests</span><strong class="kpi-val mono danger-text" id="audit-invalid">0</strong></div>
+            <div class="kpi-cell"><span class="kpi-label">Most Duplicated ID</span><strong class="kpi-val mono" id="audit-most-dup">&mdash;</strong></div>
+          </div>
+
+          <div class="surface-block">
+            <div class="block-header">
+              <div>
+                <h2>Arrival Audit History</h2>
+                <p class="block-sub">Real-time backend audit trail from <code>GET /api/packages/activity</code></p>
+              </div>
+              <div class="filter-bar">
+                <select id="audit-filter" aria-label="Filter audit logs by operation">
+                  <option value="ALL">All Operations</option>
+                  <option value="NEW_PACKAGE">NEW_PACKAGE</option>
+                  <option value="INTERVAL_EXTENSION">INTERVAL_EXTENSION</option>
+                  <option value="BRIDGE_MERGE">BRIDGE_MERGE</option>
+                  <option value="DUPLICATE">DUPLICATE</option>
+                  <option value="INVALID_REQUEST">INVALID_REQUEST</option>
+                  <option value="BATCH">BATCH</option>
+                  <option value="UNDO">UNDO</option>
+                </select>
+                <button type="button" id="refresh-audit-btn" class="btn btn-secondary">Refresh</button>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Timestamp</th>
+                    <th>Package</th>
+                    <th>Operation</th>
+                    <th>Status</th>
+                    <th>Intervals</th>
+                    <th>Duration (ns)</th>
+                    <th>Message</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-tbody">
+                  <tr><td colspan="8" class="empty-cell">No audit entries recorded yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialogs -->
+  <dialog id="reset-dialog" aria-labelledby="reset-title">
+    <h3 id="reset-title">Reset Live Arrival Index?</h3>
+    <p>This invokes <code>DELETE /api/packages</code> and permanently clears all intervals, audit logs, and snapshots from the in-memory TreeMap.</p>
+    <div class="dialog-actions">
+      <button type="button" id="cancel-reset-btn" class="btn btn-secondary">Cancel</button>
+      <button type="button" id="confirm-reset-btn" class="btn btn-danger">Confirm Reset</button>
+    </div>
+  </dialog>
+
+  <dialog id="undo-dialog" aria-labelledby="undo-title">
+    <h3 id="undo-title">Undo Last Successful Arrival?</h3>
+    <p>This invokes <code>POST /api/packages/undo</code> and reverts the most recent insertion, including splitting any bridge-merged interval.</p>
+    <div class="dialog-actions">
+      <button type="button" id="cancel-undo-btn" class="btn btn-secondary">Cancel</button>
+      <button type="button" id="confirm-undo-btn" class="btn btn-primary">Confirm Undo</button>
+    </div>
+  </dialog>
+
+  <script src="/js/app.js" defer></script>
+</body>
+</html>
